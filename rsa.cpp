@@ -235,15 +235,40 @@ std::string RSA_Decrypt(const std::string& dataToDecrypt, const RSA_Keys& keys)
     return IntToString(boost::multiprecision::powm(StringToInt(dataToDecrypt), keys.D, keys.N));
 }
 
+void KeyGeneratorBenchmark(uint64_t iterations)
+{
+    std::cout << "Example: https://www.javamex.com/tutorials/cryptography/rsa_key_length.shtml#:~:text=Apple%20M1%20for-,comparison,-%3A" << std::endl;
+    std::cout << "Start: " << (float)clock() / CLOCKS_PER_SEC << " sec" << std::endl;
+
+    clock_t Start = clock();
+    clock_t delta, start, max = 0, min = 111111111111;
+    for (int i = 0; i < iterations; i++)
+    {
+        start = clock();
+        RSA_Keys keys = KeyGen(RSA_1024);
+        delta = clock() - start;
+        if (delta < min) min = delta;
+        if (delta > max) max = delta;
+    }
+    clock_t End = clock();
+
+    std::cout << "End: " << (float)clock() / CLOCKS_PER_SEC << " sec" << std::endl;
+    std::cout << "Min: " << (float)min / CLOCKS_PER_SEC << " sec" << std::endl;
+    std::cout << "Max: " << (float)max / CLOCKS_PER_SEC << " sec" << std::endl;
+    std::cout << "Sredn: " << (float)((End - Start) / iterations) / CLOCKS_PER_SEC << " sec" << std::endl;
+}
+
 int main()
 {    
     // g++ -O3 rsa.cpp -lboost_random
     // -lboost_random-mgw12-mt-x64-1_81
-    std::cout << time(0) << std::endl;
+
+    // You can check this realisation speed
+    // KeyGeneratorBenchmark(100);
+
     RSA_Keys keys = KeyGen(RSA_1024);
     std::string message = "Some long message to encrypt it using rsa. Some long message to decrypt it using rsa.";
     std::string encryptedMessage = RSA_Encrypt(message, keys);
     std::string decryptedMessage = RSA_Decrypt(encryptedMessage, keys);
     std::cout << decryptedMessage << std::endl;
-    std::cout << time(0) << std::endl;
 }

@@ -7,3 +7,5 @@ Require boost cpp_int and boost random. Can be easily changed to different long 
 ## Windows
 For MinGW: `-lboost_random-mgw12-mt-x64-1_81`
 Note that it should be your boost version.
+## Speed tests
+You can check speed with benchmark function KeyGeneratorBenchmark
