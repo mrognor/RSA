@@ -4,6 +4,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <fstream>
 
 #include <boost/random/random_device.hpp>
 #include <boost/random.hpp>
@@ -17,7 +18,74 @@ typedef boost::multiprecision::cpp_int longInt;
 
 struct RSA_Keys
 {
-    RSA_Keys(longInt e, longInt d, longInt n) { E = e; N = n; D = d;};
+    RSA_Keys(const std::string& pubKeyFile, const std::string& privKeyName)
+    {
+        ReadPrivKey(privKeyName);
+        ReadPubKey(pubKeyFile);
+    }
+
+    RSA_Keys(longInt e, longInt d, longInt n) { E = e; N = n; D = d; };
+
+    // Return true if successfully open file. False otherwise
+    // Private key will saved with file name fileName
+    // Public key will saved with file name fileName.pub
+    bool SaveKeysToFile(const std::string& fileName)
+    {
+        std::ofstream privKeyFile(fileName);
+        std::ofstream pubKeyFile(fileName + ".pub");
+
+        if (!pubKeyFile.is_open() || !privKeyFile.is_open())
+            return false;
+        
+        privKeyFile << D << std::endl;
+        privKeyFile << N << std::endl;
+        pubKeyFile << E << std::endl;
+        pubKeyFile << N << std::endl;
+
+        pubKeyFile.close();
+        privKeyFile.close();
+        return true;
+    }
+
+    // Return true if successfully open file. False otherwise
+    bool ReadPubKey(const std::string& fileName)
+    {
+        std::ifstream file(fileName);
+
+        if (!file.is_open())
+            return false;
+
+        std::string fileLine;
+
+        getline(file, fileLine);
+        E.assign(fileLine);
+
+        getline(file, fileLine);
+        N.assign(fileLine);
+        file.close();
+
+        return true;
+    }
+
+    // Return true if successfully open file. False otherwise
+    bool ReadPrivKey(const std::string& fileName)
+    {
+        std::ifstream file(fileName);
+
+        if (!file.is_open())
+            return false;
+
+        std::string fileLine;
+
+        getline(file, fileLine);
+        D.assign(fileLine);
+
+        getline(file, fileLine);
+        N.assign(fileLine);
+        file.close();
+
+        return true;
+    }
 
     longInt E;
     longInt D;
@@ -260,13 +328,24 @@ void KeyGeneratorBenchmark(uint64_t iterations)
 
 int main()
 {    
+    // To-Do
+    // 1) Check key sizes
+    
     // g++ -O3 rsa.cpp -lboost_random
     // -lboost_random-mgw12-mt-x64-1_81
 
     // You can check this realisation speed
     // KeyGeneratorBenchmark(100);
 
+    // You can load keys from files in struct constructor
+    // RSA_Keys keys("keys.pub", "keys");
+    
     RSA_Keys keys = KeyGen(RSA_1024);
+    keys.SaveKeysToFile("keys");
+
+    keys.ReadPrivKey("keys");
+    keys.ReadPubKey("keys.pub");
+
     std::string message = "Some long message to encrypt it using rsa. Some long message to decrypt it using rsa.";
     std::string encryptedMessage = RSA_Encrypt(message, keys);
     std::string decryptedMessage = RSA_Decrypt(encryptedMessage, keys);
